@@ -64,7 +64,7 @@ import net.imglib2.type.numeric.real.FloatType;
  *
  */
 @Plugin(type = Command.class,
-menuPath = "Plugins>BigDataViewer>Export Current Image as N5")
+menuPath = "Plugins>N5>Export Current Image Multiscale")
 public class ExportImagePlusToN5Plugin implements Command {
 
 	public static void main(String[] args) {

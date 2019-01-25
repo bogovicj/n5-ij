@@ -40,7 +40,7 @@ public class N5SetupImgLoader<T extends NumericType<T> & NativeType<T>, V extend
 	@Override
 	public RandomAccessibleInterval<V> getVolatileImage(int timepointId, int level, ImgLoaderHint... hints) {
 		try {
-			return N5Utils.openVolatile( n5Reader, N5ExportMetadata.getScaleLevelDatasetPath( channelIndex, level ), volatileType );
+			return N5Utils.openVolatile( n5Reader, N5ExportMetadata.getTimeChannelGroupPath(channelIndex, timepointId, level ), volatileType );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -50,7 +50,7 @@ public class N5SetupImgLoader<T extends NumericType<T> & NativeType<T>, V extend
 	@Override
 	public RandomAccessibleInterval<T> getImage(int timepointId, int level, ImgLoaderHint... hints) {
 		try {
-			return N5Utils.open( n5Reader, N5ExportMetadata.getScaleLevelDatasetPath( channelIndex, level ), type );
+			return N5Utils.open( n5Reader, N5ExportMetadata.getTimeChannelGroupPath( channelIndex, timepointId, level ), type );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
