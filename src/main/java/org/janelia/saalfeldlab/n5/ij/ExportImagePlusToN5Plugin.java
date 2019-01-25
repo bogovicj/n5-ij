@@ -244,7 +244,10 @@ public class ExportImagePlusToN5Plugin implements Command {
 					loopbackHeuristic, afterEachPlane, numCellCreatorThreads, new SubTaskProgressWriter( progressWriter, 0, 0.95 ) );
 			break;
 		}
-		System.out.println("n5 writing done");
+		
+		// really indicate we're done
+		progressWriter.out().println("N5 writing complete");
+		progressWriter.setProgress(1.0);
 	}
 
 
@@ -439,7 +442,6 @@ public class ExportImagePlusToN5Plugin implements Command {
 				IJ.showMessage( "Invalid export filename " + n5Filename );
 				continue;
 			}
-
 
 			return new Parameters( lastSetMipmapManual, resolutions, subdivisions, n5File, minMaxOption, lastMin, lastMax, lastDeflate );
 		}

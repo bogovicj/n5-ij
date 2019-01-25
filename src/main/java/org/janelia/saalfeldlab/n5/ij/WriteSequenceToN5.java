@@ -195,109 +195,10 @@ public class WriteSequenceToN5
 		for ( final BasicViewSetup setup : seq.getViewSetupsOrdered() )
 			perSetupMipmapInfo.put( setup.getId(), mipmapInfo );
 		writeN5File( seq, type, perSetupMipmapInfo, deflate, hdf5File, loopbackHeuristic, afterEachPlane, numCellCreatorThreads, progressWriter );
+		
+		// really make sure we indicate completion
+		progressWriter.setProgress(1.0);
 	}
-
-//	/**
-//	 * Create a hdf5 master file linking to image data from all views and all
-//	 * timepoints. This is the same as
-//	 * {@link #writeHdf5PartitionLinkFile(AbstractSequenceDescription, Map, ArrayList, File)},
-//	 * except that the information about the partition files as well as the
-//	 * path of the master file to be written is obtained from the
-//	 * {@link BasicImgLoader} of the sequence, which must be a
-//	 * {@link Hdf5ImageLoader}.
-//	 *
-//	 * @param seq
-//	 *            description of the sequence to be stored as hdf5. (The
-//	 *            {@link AbstractSequenceDescription} contains the number of
-//	 *            setups and timepoints as well as an {@link BasicImgLoader}
-//	 *            that provides the image data, Registration information is not
-//	 *            needed here, that will go into the accompanying xml).
-//	 * @param perSetupMipmapInfo
-//	 *            this maps from setup {@link BasicViewSetup#getId() id} to
-//	 *            {@link ExportMipmapInfo} for that setup. The
-//	 *            {@link ExportMipmapInfo} contains for each mipmap level, the
-//	 *            subsampling factors and subdivision block sizes.
-//	 */
-//	public static void writeN5PartitionLinkFile( final AbstractSequenceDescription< ?, ?, ? > seq, final Map< Integer, ExportMipmapInfo > perSetupMipmapInfo )
-//	{
-//		if ( !( seq.getImgLoader() instanceof Hdf5ImageLoader ) )
-//			throw new IllegalArgumentException( "sequence has " + seq.getImgLoader().getClass() + " imgloader. Hdf5ImageLoader required." );
-//		final Hdf5ImageLoader loader = ( Hdf5ImageLoader ) seq.getImgLoader();
-//		writeN5PartitionLinkFile( seq, perSetupMipmapInfo, loader.getPartitions(), loader.getHdf5File() );
-//	}
-
-//	/**
-//	 * Create a hdf5 master file linking to image data from all views and all
-//	 * timepoints. Which hdf5 files contain which part of the image data is
-//	 * specified in the {@code portitions} parameter.
-//	 *
-//	 * Note that this method only writes the master file containing links. The
-//	 * individual partitions need to be written with
-//	 * {@link #writeHdf5PartitionFile(AbstractSequenceDescription, Map, boolean, Partition, LoopbackHeuristic, AfterEachPlane, int, ProgressWriter)}.
-//	 *
-//	 * @param seq
-//	 *            description of the sequence to be stored as hdf5. (The
-//	 *            {@link AbstractSequenceDescription} contains the number of
-//	 *            setups and timepoints as well as an {@link BasicImgLoader}
-//	 *            that provides the image data, Registration information is not
-//	 *            needed here, that will go into the accompanying xml).
-//	 * @param perSetupMipmapInfo
-//	 *            this maps from setup {@link BasicViewSetup#getId() id} to
-//	 *            {@link ExportMipmapInfo} for that setup. The
-//	 *            {@link ExportMipmapInfo} contains for each mipmap level, the
-//	 *            subsampling factors and subdivision block sizes.
-//	 * @param partitions
-//	 *            which parts of the dataset are stored in which files.
-//	 * @param hdf5File
-//	 *            hdf5 master file to which the image data from the partition
-//	 *            files is linked.
-//	 */
-//	public static void writeN5PartitionLinkFile( final AbstractSequenceDescription< ?, ?, ? > seq, final Map< Integer, ExportMipmapInfo > perSetupMipmapInfo, final ArrayList< Partition > partitions, final File hdf5File )
-//	{
-//		// open HDF5 output file
-//		if ( hdf5File.exists() )
-//			hdf5File.delete();
-//		final IHDF5Writer hdf5Writer = HDF5Factory.open( hdf5File );
-//
-//		// write Mipmap descriptions
-//		for ( final BasicViewSetup setup : seq.getViewSetupsOrdered() )
-//		{
-//			final int setupId = setup.getId();
-//			final ExportMipmapInfo mipmapInfo = perSetupMipmapInfo.get( setupId );
-//			hdf5Writer.writeDoubleMatrix( Util.getResolutionsPath( setupId ), mipmapInfo.getResolutions() );
-//			hdf5Writer.writeIntMatrix( Util.getSubdivisionsPath( setupId ), mipmapInfo.getSubdivisions() );
-//		}
-//
-//		// link Cells for all views in the partition
-//		final File basePath = hdf5File.getParentFile();
-//		for ( final Partition partition : partitions )
-//		{
-//			final Map< Integer, Integer > timepointIdSequenceToPartition = partition.getTimepointIdSequenceToPartition();
-//			final Map< Integer, Integer > setupIdSequenceToPartition = partition.getSetupIdSequenceToPartition();
-//
-//			for ( final Entry< Integer, Integer > tEntry : timepointIdSequenceToPartition.entrySet() )
-//			{
-//				final int tSequence = tEntry.getKey();
-//				final int tPartition = tEntry.getValue();
-//				for ( final Entry< Integer, Integer > sEntry : setupIdSequenceToPartition.entrySet() )
-//				{
-//					final int sSequence = sEntry.getKey();
-//					final int sPartition = sEntry.getValue();
-//
-//					final ViewId idSequence = new ViewId( tSequence, sSequence );
-//					final ViewId idPartition = new ViewId( tPartition, sPartition );
-//
-//					final int numLevels = perSetupMipmapInfo.get( sSequence ).getNumLevels();
-//					for ( int level = 0; level < numLevels; ++level )
-//					{
-//						final String relativePath = XmlHelpers.getRelativePath( new File( partition.getPath() ), basePath ).getPath();
-//						hdf5Writer.object().createOrUpdateExternalLink( relativePath, Util.getCellsPath( idPartition, level ), Util.getCellsPath( idSequence, level ) );
-//					}
-//				}
-//			}
-//		}
-//		hdf5Writer.close();
-//	}
 
 	/**
 	 * Create a hdf5 partition file containing image data for a subset of views
@@ -437,23 +338,9 @@ public class WriteSequenceToN5
 						n5Writer, cellCreatorThreads, loopbackHeuristic, afterEachPlane, subProgressWriter );
 			}
 		}
-		
-//		public static <T extends RealType<T> & NativeType<T>> void writeViewToN5PartitionFile(
-//				final RandomAccessibleInterval< T > img,
-//				final int timepointIdPartition,
-//				final int setupIdPartition,
-//				final ExportMipmapInfo mipmapInfo,
-//				final boolean writeMipmapInfo,
-//				final boolean deflate,
-//				final N5Writer n5writer,
-//				final CellCreatorThread[] cellCreatorThreads,
-//				final LoopbackHeuristic loopbackHeuristic,
-//				final AfterEachPlane afterEachPlane,
-//				ProgressWriter progressWriter )
 
 		// shutdown and close file
 		stopCellCreatorThreads( cellCreatorThreads );
-//		writerQueue.close();
 		progressWriter.setProgress( 1.0 );
 	}
 
@@ -527,7 +414,6 @@ public class WriteSequenceToN5
 
 		// create loopback image-loader to read already written chunks from the
 		// h5 for generating low-resolution versions.
-		
 		N5LoopBackImageLoader loopback = null;
 		T t = Util.getTypeFromInterval(img);
 		if( loopbackHeuristic != null )
