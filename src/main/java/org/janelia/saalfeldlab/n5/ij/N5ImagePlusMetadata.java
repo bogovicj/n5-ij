@@ -41,6 +41,13 @@ public class N5ImagePlusMetadata {
 
 	}
 
+	public static double[] getPixelSpacing( final N5Reader n5, final String dataset ) throws IOException {
+		double rx = n5.getAttribute( dataset, pixelWidthKey, double.class);
+		double ry = n5.getAttribute( dataset, pixelHeightKey, double.class);
+		double rz = n5.getAttribute( dataset, pixelDepthKey, double.class);
+		return new double[]{ rx, ry, rz };
+	}
+
 	public static void readMetadata( N5Reader n5, String dataset, ImagePlus imp ) throws IOException
 	{
 		imp.setTitle( n5.getAttribute( dataset, titleKey, String.class ));
@@ -48,9 +55,10 @@ public class N5ImagePlusMetadata {
 		imp.getCalibration().fps = n5.getAttribute( dataset, fpsKey, double.class);
 		imp.getCalibration().frameInterval = n5.getAttribute( dataset, fpsKey, double.class);
 
-		imp.getCalibration().pixelWidth = n5.getAttribute( dataset, pixelWidthKey, double.class);
-		imp.getCalibration().pixelHeight = n5.getAttribute( dataset, pixelHeightKey, double.class);
-		imp.getCalibration().pixelDepth = n5.getAttribute( dataset, pixelDepthKey, double.class);
+		double[] res = getPixelSpacing( n5, dataset );
+		imp.getCalibration().pixelWidth = res[ 0 ];
+		imp.getCalibration().pixelHeight = res[ 1 ];
+		imp.getCalibration().pixelDepth = res[ 2 ];
 		imp.getCalibration().setUnit( n5.getAttribute( dataset, pixelUnitKey, String.class));
 
 		imp.getCalibration().xOrigin = n5.getAttribute( dataset, xOriginKey, double.class);
