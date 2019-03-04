@@ -129,6 +129,7 @@ public class ExportImagePlusToN5Plugin implements Command {
 		final ProgressWriter progressWriter = new ProgressWriterIJ();
 		progressWriter.out().println( "starting export..." );
 
+		
 		// create ImgLoader wrapping the image
 		final ImagePlusImgLoader< ? > imgLoader;
 		switch ( imp.getType() )
@@ -182,7 +183,6 @@ public class ExportImagePlusToN5Plugin implements Command {
 		final boolean isVirtual = imp.getStack().isVirtual();
 		final long planeSizeInBytes = imp.getWidth() * imp.getHeight() * imp.getBytesPerPixel();
 		final long ijMaxMemory = IJ.maxMemory();
-		final int numCellCreatorThreads = Math.max( 1, PluginHelper.numThreads() - 1 );
 		final LoopbackHeuristic loopbackHeuristic = new LoopbackHeuristic()
 		{
 			@Override
@@ -225,6 +225,7 @@ public class ExportImagePlusToN5Plugin implements Command {
 
 		};
 
+		int numCellCreatorThreads  = params.nThreads;
 		switch ( imp.getType() )
 		{
 		case ImagePlus.GRAY8:
@@ -271,11 +272,13 @@ public class ExportImagePlusToN5Plugin implements Command {
 		final double rangeMax;
 
 		final boolean deflate;
+		
+		final int nThreads;
 
 		public Parameters(
 				final boolean setMipmapManual, final int[][] resolutions, final int[][] subdivisions,
 				final File n5File, final MinMaxOption minMaxOption, final double rangeMin, final double rangeMax,
-				final boolean deflate )
+				final boolean deflate, final int nThreads )
 		{
 			this.setMipmapManual = setMipmapManual;
 			this.resolutions = resolutions;
@@ -285,6 +288,7 @@ public class ExportImagePlusToN5Plugin implements Command {
 			this.rangeMin = rangeMin;
 			this.rangeMax = rangeMax;
 			this.deflate = deflate;
+			this.nThreads = nThreads;
 		}
 	}
 
@@ -301,6 +305,8 @@ public class ExportImagePlusToN5Plugin implements Command {
 	static double lastMax = 65535;
 
 	static boolean lastDeflate = true;
+
+	static int lastNThreads = Math.max( 1, PluginHelper.numThreads() - 1 );
 
 	static String lastExportPath = "./export.n5";
 
@@ -338,6 +344,9 @@ public class ExportImagePlusToN5Plugin implements Command {
 			gd.addMessage( "" );
 			N5PluginHelper.addSaveAsFileField( gd, "Export_path", lastExportPath, 25 );
 
+			gd.addMessage( "" );
+			gd.addNumericField("Number of threads", lastNThreads, 0);
+
 //			gd.addMessage( "" );
 //			gd.addMessage( "This Plugin is developed by Tobias Pietzsch (pietzsch@mpi-cbg.de)\n" );
 //			Bead_Registration.addHyperLinkListener( ( MultiLineLabel ) gd.getMessage(), "mailto:pietzsch@mpi-cbg.de" );
@@ -357,6 +366,7 @@ public class ExportImagePlusToN5Plugin implements Command {
 					gd.getNextNumber();
 					gd.getNextBoolean();
 					gd.getNextString();
+					gd.getNextNumber();
 					
 					if ( e instanceof ItemEvent && e.getID() == ItemEvent.ITEM_STATE_CHANGED && e.getSource() == cMinMaxChoices )
 					{
@@ -403,6 +413,7 @@ public class ExportImagePlusToN5Plugin implements Command {
 			lastMax = gd.getNextNumber();
 			lastDeflate = gd.getNextBoolean();
 			lastExportPath = gd.getNextString();
+			lastNThreads = (int)gd.getNextNumber();
 
 			// parse mipmap resolutions and cell sizes
 			final int[][] resolutions = PluginHelper.parseResolutionsString( lastSubsampling );
@@ -443,7 +454,7 @@ public class ExportImagePlusToN5Plugin implements Command {
 				continue;
 			}
 
-			return new Parameters( lastSetMipmapManual, resolutions, subdivisions, n5File, minMaxOption, lastMin, lastMax, lastDeflate );
+			return new Parameters( lastSetMipmapManual, resolutions, subdivisions, n5File, minMaxOption, lastMin, lastMax, lastDeflate, lastNThreads );
 		}
 	}
 
