@@ -518,6 +518,21 @@ public class WriteSequenceToN5
 
 			try {
 				n5Writer.createDataset( path, dimensions, cellDimensions, N5Utils.dataType( t ), new GzipCompression() );
+				long[] factorslong = new long[ resolutions[level].length ];
+				for( int i = 0; i < factorslong.length; i++ )
+					factorslong[i] = resolutions[level][i];
+
+
+				n5Writer.setAttribute( path, "downsamplingFactors", factorslong );
+				N5ExportMetadataWriter metawriter = new N5ExportMetadataWriter( n5Writer );
+
+				double[][] doublescales = new double[resolutions.length][resolutions[0].length];
+				for( int i = 0; i < resolutions.length; i++ )
+					for( int j = 0; j < resolutions[0].length; j++ )
+						doublescales[i][j] = resolutions[i][j];
+
+				metawriter.setDefaultScales( doublescales );
+
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
