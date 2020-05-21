@@ -7,6 +7,7 @@ import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.hdf5.N5HDF5Reader;
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -28,14 +29,18 @@ public class N5Importer implements Command
 	
 	@Parameter
 	private UIService ui;
+
+    @Parameter(visibility=ItemVisibility.MESSAGE, required=false)
+    private String message = "Read an N5 container to an ImagePlus,\n"
+    		+ "or view with BigDataViewer";
 	
-    @Parameter
+    @Parameter( label = "n5 root" )
     private String n5RootLocation;
 
-    @Parameter(required=false)
+    @Parameter( label = "n5 dataset (optional)", required=false)
     private String n5Dataset;
 
-    @Parameter
+    @Parameter( label = "align to blocks", description = "description")
     private boolean alignToBlockGrid;
 
     @Parameter(choices={ BDV_OPTION, IP_OPTION })

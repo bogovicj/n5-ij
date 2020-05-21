@@ -12,6 +12,7 @@ import org.janelia.saalfeldlab.n5.RawCompression;
 import org.janelia.saalfeldlab.n5.XzCompression;
 import org.janelia.saalfeldlab.n5.hdf5.N5HDF5Writer;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -36,23 +37,28 @@ public class N5Exporter implements Command
 	public static final String XZ_COMPRESSION = "xz";
 	public static final String BLOSC_COMPRESSION = "blosc";
 
+    @Parameter(visibility=ItemVisibility.MESSAGE, required=false)
+    private String message = "Doc line";
+
 	@Parameter
 	private ImagePlus image; // or use Dataset?
 //	private Dataset image; // or use ImagePlus?
 	
-    @Parameter
+    @Parameter( label = "n5 root")
     private String n5RootLocation;
 
-    @Parameter
+    @Parameter( label = "dataset")
     private String n5Dataset;
 
-    @Parameter
+    @Parameter( label = "block size")
     private String blockSizeArg;
 
-    @Parameter(choices={GZIP_COMPRESSION, RAW_COMPRESSION, LZ4_COMPRESSION, XZ_COMPRESSION}, style="listBox")
+    @Parameter( label = "compresstion",
+    		choices={GZIP_COMPRESSION, RAW_COMPRESSION, LZ4_COMPRESSION, XZ_COMPRESSION}, style="listBox")
     private String compressionArg = GZIP_COMPRESSION;
 
-    @Parameter(choices={N5FS, N5H5}, style="listBox")
+    @Parameter( label = "container type",
+    		choices={N5FS, N5H5}, style="listBox")
     private String type = N5FS;
 
     private int[] blockSize;
