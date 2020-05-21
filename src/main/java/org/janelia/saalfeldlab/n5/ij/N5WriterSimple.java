@@ -78,8 +78,8 @@ public class N5WriterSimple implements Command {
 				    blockSize,
 				    new GzipCompression());
 
-			// metadata
-			N5ImagePlusMetadata.writeMetadata( n5writer, n5Dataset, imp);
+			N5ImagePlusMetadata meta = new N5ImagePlusMetadata();
+			meta.writeMetadata( n5writer, n5Dataset, imp);
 
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -36,8 +36,8 @@ public class N5ReaderSimple implements Command {
 			// image data
 			ImagePlus imp = N5IJUtils.load(n5reader, n5Dataset);
 
-			// metadata
-			N5ImagePlusMetadata.readMetadata(n5reader, n5Dataset, imp);
+			N5ImagePlusMetadata meta = new N5ImagePlusMetadata();
+			meta.readMetadata(n5reader, n5Dataset, imp);
 			
 			ui.show( imp );
 
