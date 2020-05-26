@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>23.2.0</version>
+		<version>26.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -71,7 +71,7 @@
 		</repository>
 		<repository>
 			<id>imagej.public</id>
-			<url>https://maven.imagej.net/content/groups/public</url>
+			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
 	</repositories>
 
@@ -110,7 +110,11 @@
 		<dependency>
 			<groupId>org.janelia.saalfeldlab</groupId>
 			<artifactId>n5-imglib2</artifactId>
+<<<<<<< HEAD
 			<version>3.0.0</version>
+=======
+			<version>2.1.1</version>
+>>>>>>> upstream/master
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
