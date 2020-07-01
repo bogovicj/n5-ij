@@ -9,18 +9,21 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.swing.JFrame;
 
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
 import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.N5ReaderDataset;
 import org.janelia.saalfeldlab.n5.hdf5.N5HDF5Reader;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 import org.janelia.saalfeldlab.n5.metadata.N5CosemMetadata;
 import org.janelia.saalfeldlab.n5.metadata.N5ImagePlusMetadata;
 import org.janelia.saalfeldlab.n5.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.metadata.N5ViewerMetadata;
+import org.janelia.saalfeldlab.n5.ui.CropOpenDialog;
 import org.janelia.saalfeldlab.n5.ui.N5DatasetSelectorDialog;
 import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
@@ -29,6 +32,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 
+import ij.IJ;
 import ij.ImagePlus;
 import net.imglib2.FinalInterval;
 import net.imglib2.Interval;
@@ -75,9 +79,9 @@ public class N5Importer implements Command, WindowListener
 //    @Parameter( label = "Interactive crop")
 //    private boolean doInteractiveCrop = false;
 
-    @Parameter( label = "Subset", required=false, 
-    		description="Specify the subset of the volume to open. xmin,ymin,zmin;xmax,ymax,zmax" )
-    private String subset = "";
+    @Parameter( label = "Crop?", required=false, 
+    		description="If checked, a dialog will open prompting for crop parameters." )
+    private boolean showCropDialog;
     
     @Parameter( label = "as virtual?")
     private boolean isVirtual = false;
@@ -88,6 +92,9 @@ public class N5Importer implements Command, WindowListener
     					MetadataN5CosemKey,
     					MetadataSimpleKey } )
     private String metadataStyle = MetadataN5ViewerKey;
+
+	@Parameter( label = "Subset", required = false, description = "Specify the subset of the volume to open. xmin,ymin,zmin;xmax,ymax,zmax" )
+	private String subset = "";
 
     // TODO
     //@Parameter( label = "align to blocks", description = "description")
@@ -137,38 +144,61 @@ public class N5Importer implements Command, WindowListener
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public <T extends NumericType<T> & NativeType<T>> void process() throws ImgLibException, IOException
 	{
-		N5Metadata<ImagePlus> metadata = styles.get( metadataStyle );
+		List< N5ReaderDataset > list = datasetList.stream()
+				.map( x -> new N5ReaderDataset( n5, x ) )
+				.collect( Collectors.toList() );
 
-		int nd = -1;
-		ArrayList< RandomAccessibleInterval<T>> channelList = new ArrayList<>();
-		for( String d : datasetList )
+		Interval interval = null;
+		if( !subset.isEmpty() )
 		{
-			RandomAccessibleInterval<T> imgRaw = (RandomAccessibleInterval<T>) N5Utils.open( n5, d );
+			String[] minmax = subset.split(";");
+			long[] min = Arrays.stream( minmax[ 0 ].split(",")).mapToLong( Long::parseLong ).toArray();
+			long[] max = Arrays.stream( minmax[ 1 ].split(",")).mapToLong( Long::parseLong ).toArray();
+			interval = new FinalInterval( min, max );
+			loadAndShow( list, interval );
+		}
+		else if( showCropDialog )
+		{
+			new CropOpenDialog( list ).run( this::loadAndShow );
+		}
+	}
 
-			RandomAccessibleInterval<T> img;
-			if( !subset.isEmpty() )
+	@SuppressWarnings( "unchecked" )
+	public <T extends NumericType<T> & NativeType<T>> void loadAndShow( List<N5ReaderDataset> list, Interval interval )
+	{
+		N5Metadata<ImagePlus> metadata = styles.get( metadataStyle );
+		ArrayList< RandomAccessibleInterval<T>> channelList = new ArrayList<>();
+		for( N5ReaderDataset rd : list )
+		{
+			RandomAccessibleInterval< T > imgRaw;
+			try
 			{
-				String[] minmax = subset.split(";");
-				long[] min = Arrays.stream( minmax[ 0 ].split(",")).mapToLong( Long::parseLong ).toArray();
-				long[] max = Arrays.stream( minmax[ 1 ].split(",")).mapToLong( Long::parseLong ).toArray();
-				img = Views.interval( imgRaw, new FinalInterval( min, max ));
+				imgRaw = (RandomAccessibleInterval<T>) N5Utils.open( n5, rd.dataset );
+				if( interval != null )
+					channelList.add( Views.interval( imgRaw, interval ));
+				else
+					channelList.add( imgRaw );
 			}
-			else
-				img = imgRaw;
-
-			channelList.add( img );
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
 		}
 
 		ImagePlus imp = combineChannels( channelList, "all_channels" );
-
 		if( imp == null )
 			return;
 
-		// TODO check that all metadata are the same
-		metadata.metadataFromN5( n5, datasetList.get( 0 ), imp );
+		try
+		{
+			metadata.metadataFromN5( n5, datasetList.get( 0 ), imp );
+		}
+		catch ( Exception e )
+		{
+			IJ.error( "Could not read metadata, using default values." );
+		}
 
 		imp.show();
 	}
